@@ -22,7 +22,37 @@ main =
 type Model
   = Failure Http.Error
   | Loading
-  | Success (List Element)
+  | Success PeriodicTable
+
+type alias PeriodicTable = List ChemicalElement
+
+type alias ChemicalElement = 
+  { name : String
+  , appearance : Maybe String
+  , atomicMass : Float
+  , boilingPoint : Maybe Float
+  , category : String
+  , color : Maybe String
+  , density : Maybe Float
+  , discoveredBy : Maybe String
+  , meltingPoint : Maybe Float
+  , molarHeat : Maybe Float
+  , namedBy : Maybe String
+  , number : Int
+  , period : Int
+  , phase : String
+  , source : String
+  , spectralImage : Maybe String
+  , summary : String
+  , symbol : String
+  , xpos : Int
+  , ypos : Int
+  , shells : List Int
+  , electronConfiguration : String
+  , electronAffinity : Maybe Float
+  , electronegativityPauling: Maybe Float
+  , ionizationEnergies: List Float
+  }
 
 init : () -> (Model, Cmd Msg)
 init _ =
@@ -30,7 +60,7 @@ init _ =
 
 -- UPDATE
 
-type Msg = Loaded (Result Http.Error (List Element))
+type Msg = Loaded (Result Http.Error PeriodicTable)
 
 update msg model =
   case msg of
@@ -64,12 +94,12 @@ view model =
           viewPeriodicTable periodicTable
     ]
 
-viewPeriodicTable : List Element -> Html Msg
+viewPeriodicTable : PeriodicTable -> Html Msg
 viewPeriodicTable periodicTable =
   div []
     (List.map (\element -> viewElement element) periodicTable)
 
-viewElement : Element -> Html Msg
+viewElement : ChemicalElement -> Html Msg
 viewElement element =
   div [ style "float" "left"
       , style "border-style" "solid"
@@ -102,42 +132,15 @@ loadPeriodicTable =
     , expect = Http.expectJson Loaded periodicTableDecoder
     }
 
+-- JSON
 
-type alias Element = 
-  { name : String
-  , appearance : Maybe String
-  , atomicMass : Float
-  , boilingPoint : Maybe Float
-  , category : String
-  , color : Maybe String
-  , density : Maybe Float
-  , discoveredBy : Maybe String
-  , meltingPoint : Maybe Float
-  , molarHeat : Maybe Float
-  , namedBy : Maybe String
-  , number : Int
-  , period : Int
-  , phase : String
-  , source : String
-  , spectralImage : Maybe String
-  , summary : String
-  , symbol : String
-  , xpos : Int
-  , ypos : Int
-  , shells : List Int
-  , electronConfiguration : String
-  , electronAffinity : Maybe Float
-  , electronegativityPauling: Maybe Float
-  , ionizationEnergies: List Float
-  }
-
-periodicTableDecoder : Decoder (List Element)
+periodicTableDecoder : Decoder PeriodicTable
 periodicTableDecoder =
   field "elements" (list elementDecoder)
 
-elementDecoder : Decoder Element
+elementDecoder : Decoder ChemicalElement
 elementDecoder =
-  Decode.succeed Element
+  Decode.succeed ChemicalElement
     |> required "name" string
     |> required "appearance" (nullable string)
     |> required "atomic_mass" float
