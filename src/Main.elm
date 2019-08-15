@@ -1,10 +1,12 @@
 import Browser
 import Debug
 import Html exposing (..)
+import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
 import Json.Decode as Decode exposing (Decoder, field, float, int, list, nullable, string)
 import Json.Decode.Pipeline exposing (required, optional, hardcoded)
+import Round
 
 
 main =
@@ -37,8 +39,8 @@ update msg model =
         Ok periodicTable ->
           (Success periodicTable, Cmd.none)
         
-        Err blah ->
-          (Failure blah, Cmd.none)
+        Err error ->
+          (Failure error, Cmd.none)
 
 -- SUBSCRIPTIONS
 
@@ -50,22 +52,44 @@ subscriptions model =
 
 view model =
   div []
-    [ h2 [] [ text "Periodic Table"]
-    , viewPeriodicTable model
+    [ h2 [ style "text-align" "center"] [ text "Periodic Table"]
+    , case model of
+        Failure error ->
+          div [] [ text (Debug.toString error)]
+    
+        Loading ->
+          text "Loading..."
+    
+        Success periodicTable ->
+          viewPeriodicTable periodicTable
     ]
 
-viewPeriodicTable : Model -> Html Msg
-viewPeriodicTable model =
-  case model of
-    Failure error ->
-      div [] [ text (Debug.toString error)]
-    
-    Loading ->
-      text "Loading..."
-    
-    Success periodicTable ->
-      ul []
-        (List.map (\e -> li [] [ text (e.name ++ " (" ++ e.symbol ++ ")") ]) periodicTable)
+viewPeriodicTable : List Element -> Html Msg
+viewPeriodicTable periodicTable =
+  div []
+    (List.map (\element -> viewElement element) periodicTable)
+
+viewElement : Element -> Html Msg
+viewElement element =
+  div [ style "float" "left"
+      , style "border-style" "solid"
+      , style "border-width" "thin"
+      , style "width" "120px"
+      , style "margin" "2px"
+      ]
+      [ p
+          [style "margin" "2px 2px 0px"]
+          [text (String.fromInt element.number)]
+      , p
+          [ style "margin" "0px", style "font" "40px arial bold", style "text-align" "center" ]
+          [text element.symbol]
+      , p
+          [ style "margin" "0px", style "text-align" "center", style "font-size" "14px" ]
+          [text (Round.round 3 element.atomicMass)]
+      , p
+          [ style "margin" "4px 4px 10px", style "font-weight" "bold",  style "text-align" "center" ]
+          [text element.name]
+      ]
 
 -- HTTP
 
