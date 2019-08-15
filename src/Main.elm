@@ -76,12 +76,13 @@ viewElement element =
       , style "border-width" "thin"
       , style "width" "120px"
       , style "margin" "2px"
+      , style "font-family" "Arial"
       ]
       [ p
-          [style "margin" "2px 2px 0px"]
+          [style "margin" "4px 4px 0px"]
           [text (String.fromInt element.number)]
       , p
-          [ style "margin" "0px", style "font" "40px arial bold", style "text-align" "center" ]
+          [ style "margin" "0px", style "font-weight" "bold", style "font-size" "40px", style "text-align" "center" ]
           [text element.symbol]
       , p
           [ style "margin" "0px", style "text-align" "center", style "font-size" "14px" ]
