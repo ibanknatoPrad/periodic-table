@@ -65,7 +65,7 @@ viewPeriodicTable model =
     
     Success periodicTable ->
       ul []
-        (List.map (\e -> li [] [ text e.name ]) periodicTable)
+        (List.map (\e -> li [] [ text (e.name ++ " (" ++ e.symbol ++ ")") ]) periodicTable)
 
 -- HTTP
 
