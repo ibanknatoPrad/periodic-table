@@ -1,20 +1,19 @@
 import Browser
+import Css exposing (..)
 import Debug
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
+import Html.Styled exposing (..)
+import Html.Styled.Attributes exposing (css)
 import Http
 import Json.Decode as Decode exposing (Decoder, field, float, int, list, nullable, string)
 import Json.Decode.Pipeline exposing (required, optional, hardcoded)
 import Round
-
 
 main =
   Browser.element
     { init = init
     , update = update
     , subscriptions = subscriptions
-    , view = view
+    , view = view >> toUnstyled
     }
 
 -- MODEL
@@ -81,8 +80,11 @@ subscriptions model =
 -- VIEW
 
 view model =
-  div []
-    [ h2 [ style "text-align" "center"] [ text "Periodic Table"]
+  div
+    []
+    [ h2 
+        [ css [ textAlign center ] ]
+        [ text "Periodic Table" ]
     , case model of
         Failure error ->
           div [] [ text (Debug.toString error)]
@@ -101,26 +103,44 @@ viewPeriodicTable periodicTable =
 
 viewElement : ChemicalElement -> Html Msg
 viewElement element =
-  div [ style "float" "left"
-      , style "border-style" "solid"
-      , style "border-width" "thin"
-      , style "width" "120px"
-      , style "margin" "2px"
-      , style "font-family" "Arial"
-      ]
-      [ p
-          [style "margin" "4px 4px 0px"]
-          [text (String.fromInt element.number)]
-      , p
-          [ style "margin" "0px", style "font-weight" "bold", style "font-size" "40px", style "text-align" "center" ]
-          [text element.symbol]
-      , p
-          [ style "margin" "0px", style "text-align" "center", style "font-size" "14px" ]
-          [text (Round.round 3 element.atomicMass)]
-      , p
-          [ style "margin" "4px 4px 10px", style "font-weight" "bold",  style "text-align" "center" ]
-          [text element.name]
-      ]
+  div
+    [ css
+        [ Css.float left
+        , borderStyle solid
+        , borderWidth (px 1)
+        , width (px 120)
+        , margin (px 2)
+        , fontFamilies ["Arial"]
+        ]
+    ]
+    [ p
+        [ css [ margin3 (px 4) (px 4) (px 0) ] ]
+        [ text (String.fromInt element.number) ]
+    , p
+        [ css
+            [ margin (px 0)
+            , fontWeight bold
+            , fontSize (px 40)
+            , textAlign center
+            ]
+        ]
+        [ text element.symbol ]
+    , p
+        [ css
+            [ margin (px 0)
+            , textAlign center
+            , fontSize (px 14)
+            ]
+        ]
+        [ text (Round.round 3 element.atomicMass) ]
+    , p
+        [ css
+            [ margin3 (px 4) (px 4) (px 10)
+            , textAlign center
+            ]
+        ]
+        [ text element.name ]
+    ]
 
 -- HTTP
 
