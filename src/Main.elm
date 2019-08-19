@@ -1,3 +1,4 @@
+import Array
 import Browser
 import Css exposing (..)
 import Debug
@@ -98,49 +99,82 @@ view model =
 
 viewPeriodicTable : PeriodicTable -> Html Msg
 viewPeriodicTable periodicTable =
-  div []
-    (List.map (\element -> viewElement element) periodicTable)
-
-viewElement : ChemicalElement -> Html Msg
+  Html.Styled.table
+    [ css [ fontSize (px 11) ] ]
+    [
+      tr
+        []
+        (
+          ( List.foldl
+              (\element a -> 
+                case element of
+                  Nothing ->
+                    a
+                  
+                  Just e ->
+                    Array.set ((e.ypos - 1) * 18 + e.xpos - 1) (Just e) a
+              )
+              (Array.initialize (18 * 10) (always Nothing))
+              (List.map Just periodicTable)
+          )
+          |> Array.map viewElement
+          |> Array.toList
+        )
+    ]
+    
+viewElement : Maybe ChemicalElement -> Html Msg
 viewElement element =
-  div
+  td
     [ css
-        [ Css.float left
-        , borderStyle solid
-        , borderWidth (px 1)
-        , width (px 120)
-        , margin (px 2)
-        , fontFamilies ["Arial"]
-        ]
+      [ Css.float left
+      , border2 (px 1) solid
+      , width (px 56)
+      , height (px 56)
+      , margin (px 1)
+      , fontFamilies ["Arial"]
+      ]
     ]
-    [ p
-        [ css [ margin3 (px 4) (px 4) (px 0) ] ]
-        [ text (String.fromInt element.number) ]
-    , p
-        [ css
-            [ margin (px 0)
-            , fontWeight bold
-            , fontSize (px 40)
-            , textAlign center
+    ( case element of
+      Nothing ->
+        []
+      
+      Just e ->
+        [ p
+            [ css [ margin3 (px 2) (px 2) (px 0) ] ]
+            [ text (String.fromInt e.number) ]
+        , p
+            [ css
+                [ margin2 (px -2) (px 0)
+                , fontWeight bold
+                , fontSize (px 20)
+                , textAlign center
+                ]
             ]
-        ]
-        [ text element.symbol ]
-    , p
-        [ css
-            [ margin (px 0)
-            , textAlign center
-            , fontSize (px 14)
+            [ text e.symbol ]
+        , p
+            [ css
+                (
+                  [ margin (px 0)
+                  , textAlign center
+                  ]
+                  ++
+                  ( if String.length e.name > 9 then
+                    [letterSpacing (px -1)]
+                  else
+                    []
+                  )
+                )
             ]
-        ]
-        [ text (Round.round 3 element.atomicMass) ]
-    , p
-        [ css
-            [ margin3 (px 4) (px 4) (px 10)
-            , textAlign center
+            [ text e.name ]
+        , p
+            [ css
+                [ margin (px 0)
+                , textAlign center
+                ]
             ]
+            [ text (Round.round 3 e.atomicMass) ]
         ]
-        [ text element.name ]
-    ]
+    )
 
 -- HTTP
 
