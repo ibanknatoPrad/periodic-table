@@ -82,7 +82,7 @@ subscriptions model =
 
 view model =
   div
-    []
+    [ css [ fontFamilies ["Arial"] ] ]
     [ h2 
         [ css [ textAlign center ] ]
         [ text "Periodic Table" ]
@@ -100,81 +100,98 @@ view model =
 viewPeriodicTable : PeriodicTable -> Html Msg
 viewPeriodicTable periodicTable =
   Html.Styled.table
-    [ css [ fontSize (px 11) ] ]
-    [
-      tr
-        []
-        (
-          ( List.foldl
-              (\element a -> 
-                case element of
+    [ css
+        [ fontSize (px 11)
+        , borderCollapse collapse
+        , margin auto
+        ]
+    ]
+    (
+      ( List.foldl
+          (\element a -> 
+            case element of
+              Nothing ->
+                a
+              
+              Just e ->
+                case Array.get (e.ypos - 1) a of
                   Nothing ->
                     a
                   
-                  Just e ->
-                    Array.set ((e.ypos - 1) * 18 + e.xpos - 1) (Just e) a
-              )
-              (Array.initialize (18 * 10) (always Nothing))
-              (List.map Just periodicTable)
+                  Just row ->
+                    Array.set (e.ypos - 1) (Array.set (e.xpos - 1) (Just e) row) a
           )
-          |> Array.map viewElement
-          |> Array.toList
-        )
-    ]
-    
+          (Array.initialize 10 (always (Array.initialize 18 (always Nothing))))
+          (List.map Just periodicTable)
+      )
+      |> Array.toList
+      |> List.map (\period -> viewPeriod (Array.toList period))
+    )
+
+viewPeriod : List (Maybe ChemicalElement) -> Html Msg
+viewPeriod period =
+  tr
+    []
+    (List.map viewElement period)
+
 viewElement : Maybe ChemicalElement -> Html Msg
 viewElement element =
-  td
-    [ css
-      [ Css.float left
-      , border2 (px 1) solid
-      , width (px 56)
-      , height (px 56)
-      , margin (px 1)
-      , fontFamilies ["Arial"]
-      ]
-    ]
-    ( case element of
+  case element of
       Nothing ->
-        []
+        td
+          [ css
+            [ border2 (px 0) solid
+            , width (px 56)
+            , height (px 56)
+            , padding (px 0)
+            ]
+          ]
+          []
       
       Just e ->
-        [ p
-            [ css [ margin3 (px 2) (px 2) (px 0) ] ]
-            [ text (String.fromInt e.number) ]
-        , p
-            [ css
-                [ margin2 (px -2) (px 0)
-                , fontWeight bold
-                , fontSize (px 20)
-                , textAlign center
-                ]
+        td
+          [ css
+            [ border2 (px 1) solid
+            , width (px 56)
+            , height (px 56)
+            , padding (px 0)
             ]
-            [ text e.symbol ]
-        , p
-            [ css
-                (
+          ]
+          [ p
+              [ css [ margin (px 1) ] ]
+              [ text (String.fromInt e.number) ]
+          , p
+              [ css
+                  [ margin2 (px -4) (px 0)
+                  , fontWeight bold
+                  , fontSize (px 20)
+                  , textAlign center
+                  ]
+              ]
+              [ text e.symbol ]
+          , p
+              [ css
+                  (
+                    [ margin (px 0)
+                    , textAlign center
+                    ]
+                    ++
+                    ( if String.length e.name > 9 then
+                      [letterSpacing (px -1)]
+                    else
+                      []
+                    )
+                  )
+              ]
+              [ text e.name ]
+          , p
+              [ css
                   [ margin (px 0)
                   , textAlign center
                   ]
-                  ++
-                  ( if String.length e.name > 9 then
-                    [letterSpacing (px -1)]
-                  else
-                    []
-                  )
-                )
-            ]
-            [ text e.name ]
-        , p
-            [ css
-                [ margin (px 0)
-                , textAlign center
-                ]
-            ]
-            [ text (Round.round 3 e.atomicMass) ]
-        ]
-    )
+              ]
+              [ text (Round.round 3 e.atomicMass) ]
+          ]
 
 -- HTTP
 
