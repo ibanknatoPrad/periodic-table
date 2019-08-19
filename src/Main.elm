@@ -24,7 +24,9 @@ type Model
   | Loading
   | Success PeriodicTable
 
-type alias PeriodicTable = List ChemicalElement
+type alias PeriodicTable = List Period
+
+type alias Period = List (Maybe ChemicalElement)
 
 type alias ChemicalElement = 
   { name : String
@@ -60,14 +62,30 @@ init _ =
 
 -- UPDATE
 
-type Msg = Loaded (Result Http.Error PeriodicTable)
+type Msg = Loaded (Result Http.Error (List ChemicalElement))
 
 update msg model =
   case msg of
     Loaded result ->
       case result of 
-        Ok periodicTable ->
-          (Success periodicTable, Cmd.none)
+        Ok elements ->
+          let
+            periodicTable =
+              List.foldl
+                (\element a -> 
+                  case Array.get (element.ypos - 1) a of
+                    Nothing ->
+                      a
+                    
+                    Just row ->
+                      Array.set (element.ypos - 1) (Array.set (element.xpos - 1) (Just element) row) a
+                )
+                (Array.initialize 10 (always (Array.initialize 18 (always Nothing))))
+                elements
+              |> Array.toList
+              |> List.map Array.toList
+          in
+            (Success periodicTable, Cmd.none)
         
         Err error ->
           (Failure error, Cmd.none)
@@ -106,29 +124,9 @@ viewPeriodicTable periodicTable =
         , margin auto
         ]
     ]
-    (
-      ( List.foldl
-          (\element a -> 
-            case element of
-              Nothing ->
-                a
-              
-              Just e ->
-                case Array.get (e.ypos - 1) a of
-                  Nothing ->
-                    a
-                  
-                  Just row ->
-                    Array.set (e.ypos - 1) (Array.set (e.xpos - 1) (Just e) row) a
-          )
-          (Array.initialize 10 (always (Array.initialize 18 (always Nothing))))
-          (List.map Just periodicTable)
-      )
-      |> Array.toList
-      |> List.map (\period -> viewPeriod (Array.toList period))
-    )
+    (List.map viewPeriod periodicTable)
 
-viewPeriod : List (Maybe ChemicalElement) -> Html Msg
+viewPeriod : Period -> Html Msg
 viewPeriod period =
   tr
     []
@@ -140,22 +138,22 @@ viewElement element =
       Nothing ->
         td
           [ css
-            [ border2 (px 0) solid
-            , width (px 56)
-            , height (px 56)
-            , padding (px 0)
-            ]
+              [ border2 (px 0) solid
+              , width (px 56)
+              , height (px 56)
+              , padding (px 0)
+              ]
           ]
           []
       
       Just e ->
         td
           [ css
-            [ border2 (px 1) solid
-            , width (px 56)
-            , height (px 56)
-            , padding (px 0)
-            ]
+              [ border2 (px 1) solid
+              , width (px 56)
+              , height (px 56)
+              , padding (px 0)
+              ]
           ]
           [ p
               [ css [ margin (px 1) ] ]
@@ -177,7 +175,7 @@ viewElement element =
                     ]
                     ++
                     ( if String.length e.name > 9 then
-                      [letterSpacing (px -1)]
+                      [ letterSpacing (px -1) ]
                     else
                       []
                     )
@@ -205,7 +203,7 @@ loadPeriodicTable =
 
 -- JSON
 
-periodicTableDecoder : Decoder PeriodicTable
+periodicTableDecoder : Decoder (List ChemicalElement)
 periodicTableDecoder =
   field "elements" (list elementDecoder)
 
