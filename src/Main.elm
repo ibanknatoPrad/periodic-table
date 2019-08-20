@@ -1,7 +1,7 @@
-import Array
 import Browser
 import Css exposing (..)
 import Debug
+import Dict
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css)
 import Http
@@ -66,29 +66,27 @@ type Msg = Loaded (Result Http.Error (List ChemicalElement))
 
 update msg model =
   case msg of
-    Loaded result ->
-      case result of 
-        Ok elements ->
-          let
-            periodicTable =
-              List.foldl
-                (\element a -> 
-                  case Array.get (element.ypos - 1) a of
-                    Nothing ->
-                      a
-                    
-                    Just row ->
-                      Array.set (element.ypos - 1) (Array.set (element.xpos - 1) (Just element) row) a
-                )
-                (Array.initialize 10 (always (Array.initialize 18 (always Nothing))))
-                elements
-              |> Array.toList
-              |> List.map Array.toList
-          in
-            (Success periodicTable, Cmd.none)
-        
-        Err error ->
-          (Failure error, Cmd.none)
+    Loaded (Err error) ->
+      (Failure error, Cmd.none)
+
+    Loaded (Ok elements) ->
+      let
+        periodicTableDict =
+          List.foldl
+            (\element dict -> Dict.insert (element.ypos, element.xpos) element dict)
+            Dict.empty
+            elements
+
+        periodicTable =
+          List.map
+            (\row ->
+              List.map
+                (\col -> Dict.get (row, col) periodicTableDict)
+                (List.range 1 18)
+            )
+            (List.range 1 10)
+      in
+        (Success periodicTable, Cmd.none)
 
 -- SUBSCRIPTIONS
 
