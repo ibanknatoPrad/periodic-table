@@ -96,6 +96,20 @@ subscriptions model =
 
 -- VIEW
 
+categoryColors =
+  Dict.fromList
+    [ ("actinide", (rgb 242 196 206))
+    , ("alkali metal", (rgb 255 175 175))
+    , ("alkaline earth metal", (rgb 252 200 143))
+    , ("diatomic nonmetal", (rgb 126 233 220))
+    , ("lanthanide", (rgb 251 199 237))
+    , ("metalloid", (rgb 241 246 149))
+    , ("noble gas", (rgb 168 224 255))
+    , ("polyatomic nonmetal", (rgb 162 241 178))
+    , ("post-transition metal", (rgb 200 201 250))
+    , ("transition metal", (rgb 221 251 177))
+    ]
+
 view model =
   div
     [ css [ fontFamilies ["Arial"] ] ]
@@ -104,7 +118,7 @@ view model =
         [ text "Periodic Table" ]
     , case model of
         Failure error ->
-          div [] [ text (Debug.toString error)]
+          div [] [ text (Debug.toString error) ]
     
         Loading ->
           text "Loading..."
@@ -136,7 +150,7 @@ viewElement element =
       Nothing ->
         td
           [ css
-              [ border2 (px 0) solid
+              [ border (px 0)
               , width (px 56)
               , height (px 56)
               , padding (px 0)
@@ -145,49 +159,57 @@ viewElement element =
           []
       
       Just e ->
-        td
-          [ css
-              [ border2 (px 1) solid
-              , width (px 56)
-              , height (px 56)
-              , padding (px 0)
-              ]
-          ]
-          [ p
-              [ css [ margin (px 1) ] ]
-              [ text (String.fromInt e.number) ]
-          , p
-              [ css
-                  [ margin2 (px -4) (px 0)
-                  , fontWeight bold
-                  , fontSize (px 20)
-                  , textAlign center
-                  ]
-              ]
-              [ text e.symbol ]
-          , p
-              [ css
-                  (
+        let
+            bgColor = Maybe.withDefault (rgb 233 233 233) (Dict.get e.category categoryColors)
+        in
+          td
+            [ css
+                [ border3 (px 1) solid (rgb 0 0 0)
+                , width (px 56)
+                , height (px 56)
+                , padding (px 0)
+                , backgroundColor bgColor
+                , hover
+                    [ backgroundColor (rgba bgColor.red bgColor.green bgColor.blue 0.6)
+                    , outline3 (px 1) solid (rgb 0 0 0)
+                    ]
+                ]
+            ]
+            [ p
+                [ css [ margin (px 1) ] ]
+                [ text (String.fromInt e.number) ]
+            , p
+                [ css
+                    [ margin2 (px -4) (px 0)
+                    , fontWeight bold
+                    , fontSize (px 20)
+                    , textAlign center
+                    ]
+                ]
+                [ text e.symbol ]
+            , p
+                [ css
+                    (
+                      [ margin (px 0)
+                      , textAlign center
+                      ]
+                      ++
+                      ( if String.length e.name > 9 then
+                        [ letterSpacing (px -1) ]
+                      else
+                        []
+                      )
+                    )
+                ]
+                [ text e.name ]
+            , p
+                [ css
                     [ margin (px 0)
                     , textAlign center
                     ]
-                    ++
-                    ( if String.length e.name > 9 then
-                      [ letterSpacing (px -1) ]
-                    else
-                      []
-                    )
-                  )
-              ]
-              [ text e.name ]
-          , p
-              [ css
-                  [ margin (px 0)
-                  , textAlign center
-                  ]
-              ]
-              [ text (Round.round 3 e.atomicMass) ]
-          ]
+                ]
+                [ text (Round.round 3 e.atomicMass) ]
+            ]
 
 -- HTTP
 
