@@ -23,12 +23,18 @@ main =
 type Model
   = Failure Http.Error
   | Loading
-  | Success PeriodicTable
+  | Success Data
+
+type alias Data =
+  { periodicTable : PeriodicTable
+  , highlight : Maybe ElementPosition
+  }
+
+type alias ElementPosition =
+  (Int, Int)
 
 type alias PeriodicTable =
-  { table : Dict.Dict (Int, Int) ChemicalElement
-  , highlight : Maybe (Int, Int)
-  }
+  Dict.Dict ElementPosition ChemicalElement
 
 type alias Period =
   List (Maybe ChemicalElement)
@@ -69,7 +75,7 @@ init _ =
 
 type Msg
   = Loaded (Result Http.Error (List ChemicalElement))
-  | Highlight (Maybe (Int, Int))
+  | Highlight (Maybe ElementPosition)
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -85,7 +91,7 @@ update msg model =
             Dict.empty
             elements
       in
-      (Success (PeriodicTable periodicTable Nothing), Cmd.none)
+      (Success (Data periodicTable Nothing), Cmd.none)
     
     Highlight highlight ->
       case model of
@@ -93,7 +99,7 @@ update msg model =
           (Success { data | highlight = highlight }, Cmd.none)
 
         _ ->
-          (Failure Http.NetworkError, Cmd.none)
+          (model, Cmd.none)
 
 -- SUBSCRIPTIONS
 
@@ -103,6 +109,7 @@ subscriptions model =
 
 -- VIEW
 
+categoryColors : Dict.Dict String Color
 categoryColors =
   Dict.fromList
     [ ("actinide", (rgb 242 196 206))
@@ -130,11 +137,11 @@ view model =
     Loading ->
       text "Loading..."
     
-    Success periodicTable ->
-      viewPeriodicTable periodicTable
+    Success data ->
+      viewPeriodicTable data
 
-viewPeriodicTable : PeriodicTable -> Html Msg
-viewPeriodicTable periodicTable =
+viewPeriodicTable : Data -> Html Msg
+viewPeriodicTable data =
   div
     [ css
         [ fontFamilies ["Arial"]
@@ -155,17 +162,17 @@ viewPeriodicTable periodicTable =
             tr
               []
               (List.map
-                (\col -> Dict.get (row, col) periodicTable.table |> viewElement)
+                (\col -> viewElement data (row, col))
                 (List.range 1 18)
               )
           )
           (List.range 1 10)
         )
-    , viewHighlight periodicTable
+    , viewHighlight data
     ]
 
-viewElement : Maybe ChemicalElement -> Html Msg
-viewElement element =
+viewElement : Data -> ElementPosition -> Html Msg
+viewElement data position =
   let
       cell =
         styled td
@@ -175,7 +182,7 @@ viewElement element =
           , padding (px 0)
           ]
   in
-  case element of
+  case Dict.get position data.periodicTable of
       Nothing ->
         cell [] []
       
@@ -233,8 +240,8 @@ viewElement element =
               [ text (Round.round 3 e.atomicMass) ]
           ]
 
-viewHighlight : PeriodicTable -> Html Msg
-viewHighlight periodicTable =
+viewHighlight : Data -> Html Msg
+viewHighlight data =
   let
     highlightDiv = styled div
       [ position absolute
@@ -244,12 +251,12 @@ viewHighlight periodicTable =
       , height (px 136)
       ]
   in
-  case periodicTable.highlight of
+  case data.highlight of
     Nothing ->
       highlightDiv [] []
     
     Just key ->
-      case Dict.get key periodicTable.table of
+      case Dict.get key data.periodicTable of
         Nothing ->
           highlightDiv [] []
         
