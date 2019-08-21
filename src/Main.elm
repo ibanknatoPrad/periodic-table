@@ -132,7 +132,6 @@ viewPeriodicTable periodicTable =
   Html.Styled.table
     [ css
         [ fontSize (px 11)
-        , borderCollapse collapse
         , margin auto
         ]
     ]
@@ -144,39 +143,35 @@ viewPeriod period =
     []
     (List.map viewElement period)
 
+cell =
+  styled td
+    [ width (px 56)
+    , height (px 56)
+    , padding (px 0)
+    ]
+
 viewElement : Maybe ChemicalElement -> Html Msg
 viewElement element =
   case element of
       Nothing ->
-        td
-          [ css
-              [ border (px 0)
-              , width (px 56)
-              , height (px 56)
-              , padding (px 0)
-              ]
-          ]
-          []
+        cell [] []
       
       Just e ->
         let
             bgColor = Maybe.withDefault (rgb 233 233 233) (Dict.get e.category categoryColors)
         in
-          td
+          cell
             [ css
-                [ border3 (px 1) solid (rgb 0 0 0)
-                , width (px 56)
-                , height (px 56)
-                , padding (px 0)
-                , backgroundColor bgColor
+                [ backgroundColor bgColor
                 , hover
                     [ backgroundColor (rgba bgColor.red bgColor.green bgColor.blue 0.6)
-                    , outline3 (px 1) solid (rgb 0 0 0)
+                    , boxShadow4 (px 0) (px 0) (px 2) (rgb 0 0 0)
+                    , borderRadius (px 4)
                     ]
                 ]
             ]
             [ p
-                [ css [ margin (px 1) ] ]
+                [ css [ margin2 (px 1) (px 2) ] ]
                 [ text (String.fromInt e.number) ]
             , p
                 [ css
