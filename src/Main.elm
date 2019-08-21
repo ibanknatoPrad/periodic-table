@@ -3,6 +3,7 @@ import Css exposing (..)
 import Debug
 import Dict
 import Html.Styled exposing (..)
+import Html.Styled.Events exposing (onMouseOut, onMouseOver)
 import Html.Styled.Attributes exposing (css)
 import Http
 import Json.Decode as Decode exposing (Decoder, field, float, int, list, nullable, string)
@@ -25,7 +26,9 @@ type Model
   | Success PeriodicTable
 
 type alias PeriodicTable =
-  List Period
+  { table : Dict.Dict (Int, Int) ChemicalElement
+  , highlight : Maybe (Int, Int)
+  }
 
 type alias Period =
   List (Maybe ChemicalElement)
@@ -66,6 +69,7 @@ init _ =
 
 type Msg
   = Loaded (Result Http.Error (List ChemicalElement))
+  | Highlight (Maybe (Int, Int))
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -75,22 +79,21 @@ update msg model =
 
     Loaded (Ok elements) ->
       let
-        periodicTableDict =
+        periodicTable =
           List.foldl
             (\element dict -> Dict.insert (element.ypos, element.xpos) element dict)
             Dict.empty
             elements
-
-        periodicTable =
-          List.map
-            (\row ->
-              List.map
-                (\col -> Dict.get (row, col) periodicTableDict)
-                (List.range 1 18)
-            )
-            (List.range 1 10)
       in
-      (Success periodicTable, Cmd.none)
+      (Success (PeriodicTable periodicTable Nothing), Cmd.none)
+    
+    Highlight highlight ->
+      case model of
+        Success data ->
+          (Success { data | highlight = highlight }, Cmd.none)
+
+        _ ->
+          (Failure Http.NetworkError, Cmd.none)
 
 -- SUBSCRIPTIONS
 
@@ -114,56 +117,71 @@ categoryColors =
     , ("transition metal", (rgb 221 251 177))
     ]
 
+getCategoryColor : String -> Color
+getCategoryColor category =
+  Maybe.withDefault (rgb 233 233 233) (Dict.get category categoryColors)
+
 view : Model -> (Html Msg)
 view model =
-  div
-    [ css [ fontFamilies ["Arial"] ] ]
-    [ h2 
-        [ css [ textAlign center ] ]
-        [ text "Periodic Table" ]
-    , case model of
-        Failure error ->
-          div [] [ text (Debug.toString error) ]
+  case model of
+    Failure error ->
+      text (Debug.toString error)
+
+    Loading ->
+      text "Loading..."
     
-        Loading ->
-          text "Loading..."
-    
-        Success periodicTable ->
-          viewPeriodicTable periodicTable
-    ]
+    Success periodicTable ->
+      viewPeriodicTable periodicTable
 
 viewPeriodicTable : PeriodicTable -> Html Msg
 viewPeriodicTable periodicTable =
-  Html.Styled.table
+  div
     [ css
-        [ fontSize (px 11)
+        [ fontFamilies ["Arial"]
+        , position relative
         , margin auto
+        , width (px 1082)
         ]
     ]
-    (List.map viewPeriod periodicTable)
-
-viewPeriod : Period -> Html Msg
-viewPeriod period =
-  tr
-    []
-    (List.map viewElement period)
-
-cell =
-  styled td
-    [ width (px 56)
-    , height (px 56)
-    , padding (px 0)
+    [ h2 [ css [ textAlign center ] ] [ text "Periodic Table" ]
+    , Html.Styled.table
+        [ css
+            [ fontSize (px 11)
+            , tableLayout fixed
+            ]
+        ]
+        (List.map
+          (\row ->
+            tr
+              []
+              (List.map
+                (\col -> Dict.get (row, col) periodicTable.table |> viewElement)
+                (List.range 1 18)
+              )
+          )
+          (List.range 1 10)
+        )
+    , viewHighlight periodicTable
     ]
 
 viewElement : Maybe ChemicalElement -> Html Msg
 viewElement element =
+  let
+      cell =
+        styled td
+          [ width (px 58)
+          , maxWidth (px 58)
+          , height (px 58)
+          , padding (px 0)
+          ]
+  in
   case element of
       Nothing ->
         cell [] []
       
       Just e ->
         let
-            bgColor = Maybe.withDefault (rgb 233 233 233) (Dict.get e.category categoryColors)
+            bgColor = getCategoryColor e.category
         in
         cell
           [ css
@@ -174,6 +192,8 @@ viewElement element =
                   , borderRadius (px 4)
                   ]
               ]
+          , onMouseOver (Highlight (Just (e.ypos, e.xpos)))
+          , onMouseOut (Highlight Nothing)
           ]
           [ p
               [ css [ margin2 (px 1) (px 2) ] ]
@@ -194,8 +214,10 @@ viewElement element =
                     , textAlign center
                     ]
                     ++
-                    ( if String.length e.name > 9 then
-                      [ letterSpacing (px -1) ]
+                    (if String.length e.name > 11 then
+                      [ letterSpacing (px -1.4) ]
+                    else if String.length e.name > 9 then
+                      [ letterSpacing (px -0.7) ]
                     else
                       []
                     )
@@ -210,6 +232,67 @@ viewElement element =
               ]
               [ text (Round.round 3 e.atomicMass) ]
           ]
+
+viewHighlight : PeriodicTable -> Html Msg
+viewHighlight periodicTable =
+  let
+    highlightDiv = styled div
+      [ position absolute
+      , left (px 202)
+      , top (px 70)
+      , width (px 136)
+      , height (px 136)
+      ]
+  in
+  case periodicTable.highlight of
+    Nothing ->
+      highlightDiv [] []
+    
+    Just key ->
+      case Dict.get key periodicTable.table of
+        Nothing ->
+          highlightDiv [] []
+        
+        Just e ->
+          let
+              bgColor = getCategoryColor e.category
+          in
+          highlightDiv
+            [ css
+                [ border3 (px 1) solid (rgb 0 0 0)
+                , borderRadius (px 6)
+                , backgroundColor bgColor
+                ]
+            ]
+            [ p
+                [ css [ margin2 (px 4) (px 4) ] ]
+                [ text (String.fromInt e.number) ]
+            , p
+                [ css
+                    [ margin3 (px 2) (px 0) (px 0)
+                    , fontWeight bold
+                    , fontSize (px 56)
+                    , textAlign center
+                    ]
+                ]
+                [ text e.symbol ]
+            , p
+                [ css
+                    (
+                      [ margin (px 0)
+                      , textAlign center
+                      ]
+                    )
+                ]
+                [ text e.name ]
+            , p
+                [ css
+                    [ margin (px 4)
+                    , textAlign center
+                    ]
+                ]
+                [ text (Round.round 3 e.atomicMass) ]
+            ]
 
 -- HTTP
 
