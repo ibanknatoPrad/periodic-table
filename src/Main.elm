@@ -24,9 +24,11 @@ type Model
   | Loading
   | Success PeriodicTable
 
-type alias PeriodicTable = List Period
+type alias PeriodicTable =
+  List Period
 
-type alias Period = List (Maybe ChemicalElement)
+type alias Period =
+  List (Maybe ChemicalElement)
 
 type alias ChemicalElement = 
   { name : String
@@ -62,8 +64,10 @@ init _ =
 
 -- UPDATE
 
-type Msg = Loaded (Result Http.Error (List ChemicalElement))
+type Msg
+  = Loaded (Result Http.Error (List ChemicalElement))
 
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     Loaded (Err error) ->
@@ -86,7 +90,7 @@ update msg model =
             )
             (List.range 1 10)
       in
-        (Success periodicTable, Cmd.none)
+      (Success periodicTable, Cmd.none)
 
 -- SUBSCRIPTIONS
 
@@ -110,6 +114,7 @@ categoryColors =
     , ("transition metal", (rgb 221 251 177))
     ]
 
+view : Model -> (Html Msg)
 view model =
   div
     [ css [ fontFamilies ["Arial"] ] ]
@@ -160,51 +165,51 @@ viewElement element =
         let
             bgColor = Maybe.withDefault (rgb 233 233 233) (Dict.get e.category categoryColors)
         in
-          cell
-            [ css
-                [ backgroundColor bgColor
-                , hover
-                    [ backgroundColor (rgba bgColor.red bgColor.green bgColor.blue 0.6)
-                    , boxShadow4 (px 0) (px 0) (px 2) (rgb 0 0 0)
-                    , borderRadius (px 4)
-                    ]
-                ]
-            ]
-            [ p
-                [ css [ margin2 (px 1) (px 2) ] ]
-                [ text (String.fromInt e.number) ]
-            , p
-                [ css
-                    [ margin2 (px -4) (px 0)
-                    , fontWeight bold
-                    , fontSize (px 20)
-                    , textAlign center
-                    ]
-                ]
-                [ text e.symbol ]
-            , p
-                [ css
-                    (
-                      [ margin (px 0)
-                      , textAlign center
-                      ]
-                      ++
-                      ( if String.length e.name > 9 then
-                        [ letterSpacing (px -1) ]
-                      else
-                        []
-                      )
-                    )
-                ]
-                [ text e.name ]
-            , p
-                [ css
+        cell
+          [ css
+              [ backgroundColor bgColor
+              , hover
+                  [ backgroundColor (rgba bgColor.red bgColor.green bgColor.blue 0.6)
+                  , boxShadow4 (px 0) (px 0) (px 2) (rgb 0 0 0)
+                  , borderRadius (px 4)
+                  ]
+              ]
+          ]
+          [ p
+              [ css [ margin2 (px 1) (px 2) ] ]
+              [ text (String.fromInt e.number) ]
+          , p
+              [ css
+                  [ margin2 (px -4) (px 0)
+                  , fontWeight bold
+                  , fontSize (px 20)
+                  , textAlign center
+                  ]
+              ]
+              [ text e.symbol ]
+          , p
+              [ css
+                  (
                     [ margin (px 0)
                     , textAlign center
                     ]
-                ]
-                [ text (Round.round 3 e.atomicMass) ]
-            ]
+                    ++
+                    ( if String.length e.name > 9 then
+                      [ letterSpacing (px -1) ]
+                    else
+                      []
+                    )
+                  )
+              ]
+              [ text e.name ]
+          , p
+              [ css
+                  [ margin (px 0)
+                  , textAlign center
+                  ]
+              ]
+              [ text (Round.round 3 e.atomicMass) ]
+          ]
 
 -- HTTP
 
