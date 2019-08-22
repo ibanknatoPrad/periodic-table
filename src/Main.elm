@@ -162,6 +162,7 @@ viewPeriodicTable data =
         [ css
             [ fontSize (px 11)
             , tableLayout fixed
+            , borderCollapse collapse
             ]
         ]
         (
@@ -256,7 +257,7 @@ viewPeriods data row =
       ]
       [ text (String.fromInt row) ]
   else
-    td [] []
+    emptyCell
 
 cellStyle : List Style
 cellStyle =
@@ -265,6 +266,7 @@ cellStyle =
   , height (px 58)
   , maxHeight (px 58)
   , padding (px 0)
+  , border3 (px 1) solid (rgb 255 255 255)
   ]
 
 cell : String -> List (Attribute Msg) -> List (Html Msg) -> Html Msg
@@ -277,10 +279,7 @@ cell category =
     ++
     [ backgroundColor bgColor
     , hover
-        [ backgroundColor (rgba bgColor.red bgColor.green bgColor.blue 0.6)
-        , boxShadow4 (px 0) (px 0) (px 2) (rgb 0 0 0)
-        , borderRadius (px 4)
-        ]
+        [ backgroundColor (rgba bgColor.red bgColor.green bgColor.blue 0.6) ]
     ]
 
 emptyCell : Html Msg
@@ -362,7 +361,7 @@ viewElement data position =
             ]
         
         _ ->
-          emptyCell
+          td [] []
     
     Just e ->
       cell e.category
@@ -411,10 +410,10 @@ viewHighlight data =
   let
     highlightDiv = styled div
       [ position absolute
-      , left (px 262)
-      , top (px 84)
-      , width (px 136)
-      , height (px 136)
+      , left (px 257)
+      , top (px 80)
+      , width (px 134)
+      , height (px 134)
       ]
   in
   case data.highlight of
