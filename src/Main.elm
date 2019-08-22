@@ -128,7 +128,7 @@ getCategoryColor : String -> Color
 getCategoryColor category =
   Maybe.withDefault (rgb 233 233 233) (Dict.get category categoryColors)
 
-view : Model -> (Html Msg)
+view : Model -> Html Msg
 view model =
   case model of
     Failure error ->
@@ -147,35 +147,69 @@ viewPeriodicTable data =
         [ fontFamilies ["Arial"]
         , position relative
         , margin auto
-        , width (px 1082)
+        , width (px 1142)
         ]
     ]
-    [ h2 [ css [ textAlign center ] ] [ text "Periodic Table" ]
-    , Html.Styled.table
+    [ Html.Styled.table
         [ css
             [ fontSize (px 11)
             , tableLayout fixed
             ]
         ]
-        (List.map
-          (\row ->
-            tr
-              []
-              (List.map
-                (\col -> viewElement data (row, col))
-                (List.range 1 18)
-              )
-          )
-          (List.range 1 10)
+        (
+          viewGroups
+          ::
+          List.map
+            (\row ->
+              tr
+                []
+                (
+                  viewPeriods row
+                  ::
+                  List.map
+                    (\col -> viewElement data (row, col))
+                    (List.range 1 18)
+                )
+            )
+            (List.range 1 10)
         )
     , viewHighlight data
     ]
+
+axisStyle =
+  cellStyle
+  ++
+  [ backgroundColor (rgb 240 230 230)
+  , textAlign center
+  ]
+
+viewGroups : Html Msg
+viewGroups =
+  tr
+    []
+    (
+      td [ css axisStyle ] []
+      ::
+      List.map
+        (\group ->
+          td [ css axisStyle ] [ text (String.fromInt group) ]
+        )
+        (List.range 1 18)
+    )
+
+viewPeriods : Int -> Html Msg
+viewPeriods row =
+  if row <= 8 then
+    td [ css axisStyle ] [ text (String.fromInt row) ]
+  else
+    td [] []
 
 cellStyle : List Style
 cellStyle =
   [ width (px 58)
   , maxWidth (px 58)
   , height (px 58)
+  , maxHeight (px 58)
   , padding (px 0)
   ]
 
@@ -309,8 +343,8 @@ viewHighlight data =
   let
     highlightDiv = styled div
       [ position absolute
-      , left (px 202)
-      , top (px 70)
+      , left (px 262)
+      , top (px 84)
       , width (px 136)
       , height (px 136)
       ]
