@@ -249,7 +249,12 @@ viewPeriods data row =
             hideOpacity
   in
   if row <= 8 then
-    td [ css (axisStyle ++ [ periodOpacity ]) ] [ text (String.fromInt row) ]
+    td
+      [ css (axisStyle ++ [ periodOpacity ])
+      , onMouseOver (Highlight (Period row))
+      , onMouseOut (Highlight NoHighlight)
+      ]
+      [ text (String.fromInt row) ]
   else
     td [] []
 
@@ -294,6 +299,12 @@ cellOpacity data (row, col) =
     
     Group group ->
       if row <= 8 && col == group then
+        showOpacity
+      else
+        hideOpacity
+    
+    Period period ->
+      if row == period then
         showOpacity
       else
         hideOpacity
