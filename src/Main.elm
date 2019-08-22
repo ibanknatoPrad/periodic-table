@@ -291,7 +291,10 @@ hideOpacity = opacity (num 0.2)
 showOpacity = opacity (num 1)
 
 cellOpacity : Data -> ElementPosition -> Style
-cellOpacity data (row, col) =
+cellOpacity data position =
+  let
+      (row, col) = position
+  in
   case data.highlight of
     NoHighlight ->
       showOpacity
@@ -307,19 +310,27 @@ cellOpacity data (row, col) =
         showOpacity
     
     Period period ->
-      if row == period then
-        showOpacity
-      else
-        hideOpacity
+      case Dict.get position data.periodicTable of
+        Nothing ->
+          if row == period then
+            showOpacity
+          else
+            hideOpacity
+        
+        Just e ->
+          if e.period == period then
+            showOpacity
+          else
+            hideOpacity
     
     Lanthanides ->
-      if (row, col) == (6, 3) || row == 9 then
+      if position == (6, 3) || row == 9 then
         showOpacity
       else
         hideOpacity
     
     Actinides ->
-      if (row, col) == (7, 3) || row == 10 then
+      if position == (7, 3) || row == 10 then
         showOpacity
       else
         hideOpacity
