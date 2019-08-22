@@ -198,7 +198,7 @@ viewPeriodicTable data =
     ]
 
 axisStyle =
-  cellStyle
+  cellBaseStyle
   ++
   [ backgroundColor (rgb 240 230 230)
   , textAlign center
@@ -214,25 +214,27 @@ viewGroups data =
       List.map
         (\group ->
           let
-            groupOpacity =
+            styles =
+              axisStyle
+              ++
               case data.highlight of
                 Group g ->
                   if group == g then
-                    showOpacity
+                    []
                   else
-                    hideOpacity
+                    [ hideOpacity ]
                 
                 NoHighlight ->
-                  showOpacity
+                  []
                 
                 Element _ ->
-                  showOpacity
+                  []
 
                 _ ->
-                  hideOpacity
+                  [ hideOpacity ]
           in
           td
-            [ css ( axisStyle ++ [ groupOpacity ] )
+            [ css styles
             , onMouseOver (Highlight (Group group))
             , onMouseOut (Highlight NoHighlight)
             ]
@@ -244,26 +246,28 @@ viewGroups data =
 viewPeriods : Data -> Int -> Html Msg
 viewPeriods data row =
   let
-      periodOpacity =
+      styles =
+        axisStyle
+        ++
         case data.highlight of
           Period p ->
             if row == p then
-              showOpacity
+              []
             else
-              hideOpacity
+              [ hideOpacity ]
           
           NoHighlight ->
-            showOpacity
+            []
           
           Element _ ->
-            showOpacity
+            []
           
           _ ->
-            hideOpacity
+            [ hideOpacity ]
   in
   if row <= 8 then
     td
-      [ css (axisStyle ++ [ periodOpacity ])
+      [ css styles
       , onMouseOver (Highlight (Period row))
       , onMouseOut (Highlight NoHighlight)
       ]
@@ -271,8 +275,8 @@ viewPeriods data row =
   else
     emptyCell
 
-cellStyle : List Style
-cellStyle =
+cellBaseStyle : List Style
+cellBaseStyle =
   [ width (px 58)
   , maxWidth (px 58)
   , height (px 58)
@@ -287,7 +291,7 @@ cell category =
     bgColor = getCategoryColor category
   in
   styled td <|
-    cellStyle
+    cellBaseStyle
     ++
     [ backgroundColor bgColor
     , hover
@@ -296,59 +300,57 @@ cell category =
 
 emptyCell : Html Msg
 emptyCell =
-  styled td cellStyle [] []
-
+  styled td cellBaseStyle [] []
 
 hideOpacity = opacity (num 0.2)
-showOpacity = opacity (num 1)
 
-cellOpacity : Data -> ElementPosition -> Style
-cellOpacity data position =
+cellStyles : Data -> ElementPosition -> List Style
+cellStyles data position =
   let
       (row, col) = position
   in
   case data.highlight of
     NoHighlight ->
-      showOpacity
+      []
     
     Group group ->
       if col /= group then
-        hideOpacity
+        [ hideOpacity ]
       else if col /= 3 && row > 8 then
-        hideOpacity
+        [ hideOpacity ]
       else if col == 3 && List.member row [6,7] then
-        hideOpacity
+        [ hideOpacity ]
       else
-        showOpacity
+        []
     
     Period period ->
       case Dict.get position data.periodicTable of
         Nothing ->
           if row == period then
-            showOpacity
+            []
           else
-            hideOpacity
+            [ hideOpacity ]
         
         Just e ->
           if e.period == period then
-            showOpacity
+            []
           else
-            hideOpacity
+            [ hideOpacity ]
     
     Lanthanides ->
       if position == (6, 3) || row == 9 then
-        showOpacity
+        []
       else
-        hideOpacity
+        [ hideOpacity ]
     
     Actinides ->
       if position == (7, 3) || row == 10 then
-        showOpacity
+        []
       else
-        hideOpacity
+        [ hideOpacity ]
     
     _ ->
-      showOpacity
+      []
 
 viewElement : Data -> ElementPosition -> Html Msg
 viewElement data position =
@@ -357,7 +359,7 @@ viewElement data position =
       case position of
         (6, 3) ->
           cell "lanthanide" 
-            [ css [ cellOpacity data position ]
+            [ css (cellStyles data position)
             , onMouseOver (Highlight Lanthanides)
             , onMouseOut (Highlight NoHighlight)
             ]
@@ -375,7 +377,7 @@ viewElement data position =
         
         (7, 3) ->
           cell "actinide"
-            [ css [ cellOpacity data position ]
+            [ css (cellStyles data position)
             , onMouseOver (Highlight Actinides)
             , onMouseOut (Highlight NoHighlight)
             ]
@@ -392,7 +394,7 @@ viewElement data position =
     
     Just e ->
       cell e.category
-        [ css [ cellOpacity data position ]
+        [ css (cellStyles data position)
         , onMouseOver (Highlight (Element position))
         , onMouseOut (Highlight NoHighlight)
         ]
