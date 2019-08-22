@@ -136,6 +136,18 @@ getCategoryColor : String -> Color
 getCategoryColor category =
   Maybe.withDefault (rgb 233 233 233) (Dict.get category categoryColors)
 
+phaseColors : Dict.Dict String Color
+phaseColors =
+  Dict.fromList
+    [ ("Gas", (rgb 242 141 34))
+    , ("Liquid", (rgb 76 129 230))
+    , ("Solid", (rgb 0 0 0))
+    ]
+
+getPhaseColor : String -> Color
+getPhaseColor phase =
+  Maybe.withDefault (rgb 130 130 130) (Dict.get phase phaseColors)
+
 view : Model -> Html Msg
 view model =
   case model of
@@ -393,6 +405,7 @@ viewElement data position =
                 , fontWeight bold
                 , fontSize (px 20)
                 , textAlign center
+                , color (getPhaseColor e.phase)
                 ]
             ]
             [ text e.symbol ]
@@ -457,6 +470,7 @@ viewHighlight data =
                     , fontWeight bold
                     , fontSize (px 56)
                     , textAlign center
+                    , color (getPhaseColor e.phase)
                     ]
                 ]
                 [ text e.symbol ]
@@ -485,7 +499,7 @@ viewHighlight data =
 loadPeriodicTable : Cmd Msg
 loadPeriodicTable =
   Http.get
-    -- https://github.com/Bowserinator/Periodic-Table-JSON
+    -- https://github.com/v-do/Periodic-Table-JSON/tree/predicted-solids
     { url = "/data/Periodic-Table-JSON/PeriodicTableJSON.json"
     , expect = Http.expectJson Loaded periodicTableDecoder
     }
