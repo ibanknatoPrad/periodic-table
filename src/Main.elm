@@ -167,7 +167,7 @@ viewPeriodicTable data =
         [ fontFamilies ["Arial"]
         , position relative
         , margin auto
-        , width (px 1142)
+        , width (px 1121)
         ]
     ]
     [ Html.Styled.table
@@ -273,7 +273,7 @@ viewPeriods data row =
       ]
       [ text (String.fromInt row) ]
   else
-    emptyCell
+    td [] []
 
 cellBaseStyle : List Style
 cellBaseStyle =
@@ -299,10 +299,6 @@ cell category =
       ]
   in
   styled td styles
-
-emptyCell : Html Msg
-emptyCell =
-  styled td cellBaseStyle [] []
 
 hideOpacity = opacity (num 0.2)
 
