@@ -234,11 +234,18 @@ viewGroups data =
                   [ hideOpacity ]
           in
           td
-            [ css styles
+            [ css (styles ++ [ position relative ])
             , onMouseEnter (Highlight (Group group))
             , onMouseLeave (Highlight NoHighlight)
             ]
-            [ text (String.fromInt group) ]
+            (
+              [ text (String.fromInt group) ]
+              ++
+              if group == 1 then
+                [ div [ css [ position absolute, top (px 1), left (px 8) ] ] [ text "Group ►" ] ]
+              else
+                []
+            )
         )
         (List.range 1 18)
     )
@@ -267,11 +274,18 @@ viewPeriods data row =
   in
   if row <= 8 then
     td
-      [ css styles
+      [ css (styles ++ [ position relative ])
       , onMouseEnter (Highlight (Period row))
       , onMouseLeave (Highlight NoHighlight)
       ]
-      [ text (String.fromInt row) ]
+      (
+        [ text (String.fromInt row) ]
+        ++
+        if row == 1 then
+          [ div [ css [ position absolute, top (px 1), left (px 7) ] ] [ text "Period ▼"] ]
+        else
+          []
+      )
   else
     td [] []
 
