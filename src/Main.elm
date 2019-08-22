@@ -3,7 +3,7 @@ import Css exposing (..)
 import Debug
 import Dict
 import Html.Styled exposing (..)
-import Html.Styled.Events exposing (onMouseOut, onMouseOver)
+import Html.Styled.Events exposing (onMouseEnter, onMouseLeave)
 import Html.Styled.Attributes exposing (css)
 import Http
 import Json.Decode as Decode exposing (Decoder, field, float, int, list, nullable, string)
@@ -235,8 +235,8 @@ viewGroups data =
           in
           td
             [ css styles
-            , onMouseOver (Highlight (Group group))
-            , onMouseOut (Highlight NoHighlight)
+            , onMouseEnter (Highlight (Group group))
+            , onMouseLeave (Highlight NoHighlight)
             ]
             [ text (String.fromInt group) ]
         )
@@ -268,8 +268,8 @@ viewPeriods data row =
   if row <= 8 then
     td
       [ css styles
-      , onMouseOver (Highlight (Period row))
-      , onMouseOut (Highlight NoHighlight)
+      , onMouseEnter (Highlight (Period row))
+      , onMouseLeave (Highlight NoHighlight)
       ]
       [ text (String.fromInt row) ]
   else
@@ -358,8 +358,8 @@ viewElement data position =
         (6, 3) ->
           cell "lanthanide" 
             [ css (cellStyles data position)
-            , onMouseOver (Highlight Lanthanides)
-            , onMouseOut (Highlight NoHighlight)
+            , onMouseEnter (Highlight Lanthanides)
+            , onMouseLeave (Highlight NoHighlight)
             ]
             [ p
                 [ css [ textAlign center ] ]
@@ -376,8 +376,8 @@ viewElement data position =
         (7, 3) ->
           cell "actinide"
             [ css (cellStyles data position)
-            , onMouseOver (Highlight Actinides)
-            , onMouseOut (Highlight NoHighlight)
+            , onMouseEnter (Highlight Actinides)
+            , onMouseLeave (Highlight NoHighlight)
             ]
             [ p
                 [ css [ textAlign center ] ]
@@ -393,8 +393,8 @@ viewElement data position =
     Just e ->
       cell e.category
         [ css (cellStyles data position)
-        , onMouseOver (Highlight (Element position))
-        , onMouseOut (Highlight NoHighlight)
+        , onMouseEnter (Highlight (Element position))
+        , onMouseLeave (Highlight NoHighlight)
         ]
         [ p
             [ css [ margin2 (px 1) (px 2) ] ]
