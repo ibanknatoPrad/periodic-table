@@ -171,12 +171,22 @@ viewPeriodicTable data =
     , viewHighlight data
     ]
 
-cellCss : String -> Attribute Msg
-cellCss category =
+cellStyle : List Style
+cellStyle =
+  [ width (px 58)
+  , maxWidth (px 58)
+  , height (px 58)
+  , padding (px 0)
+  ]
+
+cell : String -> List (Attribute Msg) -> List (Html Msg) -> Html Msg
+cell category =
   let
-      bgColor = getCategoryColor category
+    bgColor = getCategoryColor category
   in
-  css
+  styled td <|
+    cellStyle
+    ++
     [ backgroundColor bgColor
     , hover
         [ backgroundColor (rgba bgColor.red bgColor.green bgColor.blue 0.6)
@@ -185,95 +195,114 @@ cellCss category =
         ]
     ]
 
-viewElement : Data -> ElementPosition -> Html Msg
-viewElement data position =
+emptyCell : Html Msg
+emptyCell =
+  styled td cellStyle [] []
+
+cellAttributes : Data -> ElementPosition -> List (Attribute Msg)
+cellAttributes data position =
+  [ css
+      [
+        cellOpacity data position
+      ]
+  , onMouseOver (Highlight (Just position))
+  , onMouseOut (Highlight Nothing)
+  ]
+
+cellOpacity : Data -> ElementPosition -> Style
+cellOpacity data (row, col) =
   let
-      cell =
-        styled td
-          [ width (px 58)
-          , maxWidth (px 58)
-          , height (px 58)
-          , padding (px 0)
-          ]
+    hide = opacity (num 0.4)
+    show = opacity (num 1)
   in
-  case position of
-    (6, 3) ->
-      cell
-        [ cellCss "lanthanide" ]
-        [ p
-            [ css [ textAlign center ] ]
-            [ text "57 - 71" ]
-        , p
-            [ css
-                [ textAlign center
-                , letterSpacing (px -0.5)
-                ]
-            ]
-            [ text "Lanthanides" ]
-        ]
+  case data.highlight of
+    Just (6, 3) ->
+      if (row, col) == (6, 3) || row == 9 then
+        show
+      else
+        hide
     
-    (7, 3) ->
-      cell
-        [ cellCss "actinide" ]
-        [ p
-            [ css [ textAlign center ] ]
-            [ text "89 - 103" ]
-        , p
-            [ css [ textAlign center ] ]
-            [ text "Actinides" ]
-        ]
+    Just (7, 3) ->
+      if (row, col) == (7, 3) || row == 10 then
+        show
+      else
+        hide
     
     _ ->
-      case Dict.get position data.periodicTable of
-        Nothing ->
-          cell [] []
-        
-        Just e ->
-          let
-              bgColor = getCategoryColor e.category
-          in
-          cell
-            [ cellCss e.category
-            , onMouseOver (Highlight (Just (e.ypos, e.xpos)))
-            , onMouseOut (Highlight Nothing)
-            ]
+      show
+
+viewElement : Data -> ElementPosition -> Html Msg
+viewElement data position =
+  case Dict.get position data.periodicTable of
+    Nothing ->
+      case position of
+        (6, 3) ->
+          cell "lanthanide" 
+            (cellAttributes data position)
             [ p
-                [ css [ margin2 (px 1) (px 2) ] ]
-                [ text (String.fromInt e.number) ]
+                [ css [ textAlign center ] ]
+                [ text "57 - 71" ]
             , p
                 [ css
-                    [ margin2 (px -4) (px 0)
-                    , fontWeight bold
-                    , fontSize (px 20)
-                    , textAlign center
+                    [ textAlign center
+                    , letterSpacing (px -0.5)
                     ]
                 ]
-                [ text e.symbol ]
-            , p
-                [ css
-                    (
-                      [ margin (px 0)
-                      , textAlign center
-                      ]
-                      ++
-                      (if String.length e.name > 11 then
-                        [ letterSpacing (px -1.4) ]
-                      else if String.length e.name > 9 then
-                        [ letterSpacing (px -0.7) ]
-                      else
-                        []
-                      )
-                    )
-                ]
-                [ text e.name ]
-            , p
-                [ css
-                    [ margin (px 0)
-                    , textAlign center
-                    ]
-                ]
-                [ text (Round.round 3 e.atomicMass) ]
+                [ text "Lanthanides" ]
             ]
+        
+        (7, 3) ->
+          cell "actinide"
+            (cellAttributes data position)
+            [ p
+                [ css [ textAlign center ] ]
+                [ text "89 - 103" ]
+            , p
+                [ css [ textAlign center ] ]
+                [ text "Actinides" ]
+            ]
+        
+        _ ->
+          emptyCell
+    
+    Just e ->
+      cell e.category
+        (cellAttributes data position)
+        [ p
+            [ css [ margin2 (px 1) (px 2) ] ]
+            [ text (String.fromInt e.number) ]
+        , p
+            [ css
+                [ margin2 (px -4) (px 0)
+                , fontWeight bold
+                , fontSize (px 20)
+                , textAlign center
+                ]
+            ]
+            [ text e.symbol ]
+        , p
+            [ css <|
+                [ margin (px 0)
+                , textAlign center
+                ]
+                ++
+                (if String.length e.name > 11 then
+                  [ letterSpacing (px -1.4) ]
+                else if String.length e.name > 9 then
+                  [ letterSpacing (px -0.7) ]
+                else
+                  []
+                )
+            ]
+            [ text e.name ]
+        , p
+            [ css
+                [ margin (px 0)
+                , textAlign center
+                ]
+            ]
+            [ text (Round.round 3 e.atomicMass) ]
+        ]
 
 viewHighlight : Data -> Html Msg
 viewHighlight data =
