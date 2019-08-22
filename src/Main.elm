@@ -289,14 +289,16 @@ cell : String -> List (Attribute Msg) -> List (Html Msg) -> Html Msg
 cell category =
   let
     bgColor = getCategoryColor category
+
+    styles =
+      cellBaseStyle
+      ++
+      [ backgroundColor bgColor
+      , hover
+          [ backgroundColor (rgba bgColor.red bgColor.green bgColor.blue 0.6) ]
+      ]
   in
-  styled td <|
-    cellBaseStyle
-    ++
-    [ backgroundColor bgColor
-    , hover
-        [ backgroundColor (rgba bgColor.red bgColor.green bgColor.blue 0.6) ]
-    ]
+  styled td styles
 
 emptyCell : Html Msg
 emptyCell =
