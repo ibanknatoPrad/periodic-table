@@ -165,14 +165,14 @@ viewPeriodicTable data =
             ]
         ]
         (
-          viewGroups
+          viewGroups data
           ::
           List.map
             (\row ->
               tr
                 []
                 (
-                  viewPeriods row
+                  viewPeriods data row
                   ::
                   List.map
                     (\col -> viewElement data (row, col))
@@ -191,24 +191,65 @@ axisStyle =
   , textAlign center
   ]
 
-viewGroups : Html Msg
-viewGroups =
+viewGroups : Data -> Html Msg
+viewGroups data =
   tr
     []
     (
-      td [ css axisStyle ] []
+      td [] []
       ::
       List.map
         (\group ->
-          td [ css axisStyle ] [ text (String.fromInt group) ]
+          let
+            groupOpacity =
+              case data.highlight of
+                Group g ->
+                  if group == g then
+                    showOpacity
+                  else
+                    hideOpacity
+                
+                NoHighlight ->
+                  showOpacity
+                
+                Element _ ->
+                  showOpacity
+
+                _ ->
+                  hideOpacity
+          in
+          td
+            [ css ( axisStyle ++ [ groupOpacity ] )
+            , onMouseOver (Highlight (Group group))
+            , onMouseOut (Highlight NoHighlight)
+            ]
+            [ text (String.fromInt group) ]
         )
         (List.range 1 18)
     )
 
-viewPeriods : Int -> Html Msg
-viewPeriods row =
+viewPeriods : Data -> Int -> Html Msg
+viewPeriods data row =
+  let
+      periodOpacity =
+        case data.highlight of
+          Period p ->
+            if row == p then
+              showOpacity
+            else
+              hideOpacity
+          
+          NoHighlight ->
+            showOpacity
+          
+          Element _ ->
+            showOpacity
+          
+          _ ->
+            hideOpacity
+  in
   if row <= 8 then
-    td [ css axisStyle ] [ text (String.fromInt row) ]
+    td [ css (axisStyle ++ [ periodOpacity ]) ] [ text (String.fromInt row) ]
   else
     td [] []
 
@@ -241,36 +282,36 @@ emptyCell : Html Msg
 emptyCell =
   styled td cellStyle [] []
 
+
+hideOpacity = opacity (num 0.2)
+showOpacity = opacity (num 1)
+
 cellOpacity : Data -> ElementPosition -> Style
 cellOpacity data (row, col) =
-  let
-    hide = opacity (num 0.4)
-    show = opacity (num 1)
-  in
   case data.highlight of
     NoHighlight ->
-      show
+      showOpacity
     
     Group group ->
       if row <= 8 && col == group then
-        show
+        showOpacity
       else
-        hide
+        hideOpacity
     
     Lanthanides ->
       if (row, col) == (6, 3) || row == 9 then
-        show
+        showOpacity
       else
-        hide
+        hideOpacity
     
     Actinides ->
       if (row, col) == (7, 3) || row == 10 then
-        show
+        showOpacity
       else
-        hide
+        hideOpacity
     
     _ ->
-      show
+      showOpacity
 
 viewElement : Data -> ElementPosition -> Html Msg
 viewElement data position =
