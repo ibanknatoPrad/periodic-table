@@ -297,10 +297,14 @@ cellOpacity data (row, col) =
       showOpacity
     
     Group group ->
-      if row <= 8 && col == group then
-        showOpacity
-      else
+      if col /= group then
         hideOpacity
+      else if col /= 3 && row > 8 then
+        hideOpacity
+      else if col == 3 && List.member row [6,7] then
+        hideOpacity
+      else
+        showOpacity
     
     Period period ->
       if row == period then
