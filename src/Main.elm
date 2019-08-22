@@ -94,10 +94,10 @@ update msg model =
     Loaded (Ok elements) ->
       let
         periodicTable =
-          List.foldl
-            (\element dict -> Dict.insert (element.ypos, element.xpos) element dict)
-            Dict.empty
-            elements
+          Dict.fromList <|
+            List.map
+              (\element -> ((element.ypos, element.xpos), element))
+              elements
       in
       (Success (Data periodicTable NoHighlight), Cmd.none)
     
