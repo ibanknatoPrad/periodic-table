@@ -27,8 +27,16 @@ type Model
 
 type alias Data =
   { periodicTable : PeriodicTable
-  , highlight : Maybe ElementPosition
+  , highlight : HighlightTarget
   }
+
+type HighlightTarget
+  = NoHighlight
+  | Element ElementPosition
+  | Group Int
+  | Period Int
+  | Lanthanides
+  | Actinides
 
 type alias ElementPosition =
   (Int, Int)
@@ -75,7 +83,7 @@ init _ =
 
 type Msg
   = Loaded (Result Http.Error (List ChemicalElement))
-  | Highlight (Maybe ElementPosition)
+  | Highlight HighlightTarget
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -91,7 +99,7 @@ update msg model =
             Dict.empty
             elements
       in
-      (Success (Data periodicTable Nothing), Cmd.none)
+      (Success (Data periodicTable NoHighlight), Cmd.none)
     
     Highlight highlight ->
       case model of
@@ -233,16 +241,6 @@ emptyCell : Html Msg
 emptyCell =
   styled td cellStyle [] []
 
-cellAttributes : Data -> ElementPosition -> List (Attribute Msg)
-cellAttributes data position =
-  [ css
-      [
-        cellOpacity data position
-      ]
-  , onMouseOver (Highlight (Just position))
-  , onMouseOut (Highlight Nothing)
-  ]
-
 cellOpacity : Data -> ElementPosition -> Style
 cellOpacity data (row, col) =
   let
@@ -250,13 +248,22 @@ cellOpacity data (row, col) =
     show = opacity (num 1)
   in
   case data.highlight of
-    Just (6, 3) ->
+    NoHighlight ->
+      show
+    
+    Group group ->
+      if row <= 8 && col == group then
+        show
+      else
+        hide
+    
+    Lanthanides ->
       if (row, col) == (6, 3) || row == 9 then
         show
       else
         hide
     
-    Just (7, 3) ->
+    Actinides ->
       if (row, col) == (7, 3) || row == 10 then
         show
       else
@@ -272,7 +279,10 @@ viewElement data position =
       case position of
         (6, 3) ->
           cell "lanthanide" 
-            (cellAttributes data position)
+            [ css [ cellOpacity data position ]
+            , onMouseOver (Highlight Lanthanides)
+            , onMouseOut (Highlight NoHighlight)
+            ]
             [ p
                 [ css [ textAlign center ] ]
                 [ text "57 - 71" ]
@@ -287,7 +297,10 @@ viewElement data position =
         
         (7, 3) ->
           cell "actinide"
-            (cellAttributes data position)
+            [ css [ cellOpacity data position ]
+            , onMouseOver (Highlight Actinides)
+            , onMouseOut (Highlight NoHighlight)
+            ]
             [ p
                 [ css [ textAlign center ] ]
                 [ text "89 - 103" ]
@@ -301,7 +314,10 @@ viewElement data position =
     
     Just e ->
       cell e.category
-        (cellAttributes data position)
+        [ css [ cellOpacity data position ]
+        , onMouseOver (Highlight (Element position))
+        , onMouseOut (Highlight NoHighlight)
+        ]
         [ p
             [ css [ margin2 (px 1) (px 2) ] ]
             [ text (String.fromInt e.number) ]
@@ -350,11 +366,8 @@ viewHighlight data =
       ]
   in
   case data.highlight of
-    Nothing ->
-      highlightDiv [] []
-    
-    Just key ->
-      case Dict.get key data.periodicTable of
+    Element position ->
+      case Dict.get position data.periodicTable of
         Nothing ->
           highlightDiv [] []
         
@@ -398,6 +411,8 @@ viewHighlight data =
                 ]
                 [ text (Round.round 3 e.atomicMass) ]
             ]
+    _ ->
+      highlightDiv [] []
 
 -- HTTP
 
